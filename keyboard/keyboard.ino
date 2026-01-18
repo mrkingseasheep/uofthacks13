@@ -46,6 +46,7 @@ void loop() {
 
     String direction = "";
 
+    // CANONICAL ORDER (never changes)
     if (up) direction += "UP";
     if (down) {
       if (direction.length()) direction += "-";
@@ -75,3 +76,4 @@ void loop() {
   prevLeft = left;
   prevRight = right;
 }
+
