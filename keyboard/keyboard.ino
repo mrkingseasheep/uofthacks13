@@ -4,12 +4,10 @@ int DOWN = 1;
 int LEFT = 3;
 int RIGHT = 2;
 
-// previous states
-bool prevUp = false;
-bool prevDown = false;
-bool prevLeft = false;
-bool prevRight = false;
+// track if buttons are currently held
+bool buttonHeld = false;
 
+// buffer time for diagonals
 const unsigned long bufferTime = 50;
 
 void setup() {
@@ -24,19 +22,18 @@ void setup() {
 }
 
 void loop() {
+  // read button states
   bool up = digitalRead(UP) == LOW;
   bool down = digitalRead(DOWN) == LOW;
   bool left = digitalRead(LEFT) == LOW;
   bool right = digitalRead(RIGHT) == LOW;
 
-  bool pressedNow =
-    (up && !prevUp) ||
-    (down && !prevDown) ||
-    (left && !prevLeft) ||
-    (right && !prevRight);
+  bool anyPressed = up || down || left || right;
 
-  if (pressedNow) {
-    delay(bufferTime);
+  // only trigger when not already held
+  if (anyPressed && !buttonHeld) {
+    buttonHeld = true;       // mark buttons as held
+    delay(bufferTime);       // small buffer to combine diagonals
 
     // re-read after buffer
     up = digitalRead(UP) == LOW;
@@ -44,9 +41,8 @@ void loop() {
     left = digitalRead(LEFT) == LOW;
     right = digitalRead(RIGHT) == LOW;
 
+    // CANONICAL ORDER: UP → DOWN → LEFT → RIGHT
     String direction = "";
-
-    // CANONICAL ORDER (never changes)
     if (up) direction += "UP";
     if (down) {
       if (direction.length()) direction += "-";
@@ -65,15 +61,15 @@ void loop() {
       Serial.println(direction);
       digitalWrite(LIGHT, HIGH);
     }
-  }
 
-  if (!up && !down && !left && !right) {
+    // wait here until all buttons are released
+    while (digitalRead(UP) == LOW || digitalRead(DOWN) == LOW ||
+           digitalRead(LEFT) == LOW || digitalRead(RIGHT) == LOW) {
+      // do nothing
+    }
+
     digitalWrite(LIGHT, LOW);
+    buttonHeld = false; // ready for next press
   }
-
-  prevUp = up;
-  prevDown = down;
-  prevLeft = left;
-  prevRight = right;
 }
 
